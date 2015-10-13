@@ -1,4 +1,4 @@
-package thread.pool;
+package thread.pool.journaldev;
 
 import java.util.concurrent.*;
 
@@ -14,9 +14,6 @@ public class WorkerPool {
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         //creating the ThreadPoolExecutor
         ThreadPoolExecutor executorPool = new ThreadPoolExecutor(2, 4, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), threadFactory, rejectionHandler);
-
-        //ThreadPoolExecutor executorPool = (ThreadPoolExecutor)Executors.newFixedThreadPool(5);
-
         //start the monitoring thread
         MyMonitorThread monitor = new MyMonitorThread(executorPool, 3);
         Thread monitorThread = new Thread(monitor);

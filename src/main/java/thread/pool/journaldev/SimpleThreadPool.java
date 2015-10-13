@@ -1,4 +1,4 @@
-package thread.pool;
+package thread.pool.journaldev;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
