@@ -1,3 +1,5 @@
+# Java Sample Trigger and Masker
+
 	注意事項：
 		1. 文章內容為使用二進制實現開關效果
 		2. 利用一個整數來存取大量開關
