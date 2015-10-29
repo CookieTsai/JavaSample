@@ -13,7 +13,7 @@ public class WorkerPool {
         //Get the ThreadFactory implementation to use
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         //creating the ThreadPoolExecutor
-        ThreadPoolExecutor executorPool = new ThreadPoolExecutor(2, 4, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), threadFactory, rejectionHandler);
+        ThreadPoolExecutor executorPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(), threadFactory, rejectionHandler);
         //start the monitoring thread
         MyMonitorThread monitor = new MyMonitorThread(executorPool, 3);
         Thread monitorThread = new Thread(monitor);

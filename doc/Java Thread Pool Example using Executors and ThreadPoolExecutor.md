@@ -9,55 +9,57 @@ Let’s write a simple program to explain it’s working.
 First we need to have a Runnable class.
 
 	package com.journaldev.threadpool;
-
+ 
 	public class WorkerThread implements Runnable {
-
-		private String command;
-
-		public WorkerThread(String s) {
-			this.command = s;
-		}
-
-		@Override
-		public void run() {
-			System.out.println(Thread.currentThread().getName() + " Start. Command = " + command);
-			processCommand();
-			System.out.println(Thread.currentThread().getName() + " End.");
-		}
-
-		private void processCommand() {
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		@Override
-		public String toString() {
-			return this.command;
-		}
+	     
+	    private String command;
+	     
+	    public WorkerThread(String s){
+	        this.command=s;
+	    }
+	 
+	    @Override
+	    public void run() {
+	        System.out.println(Thread.currentThread().getName()+" Start. Command = "+command);
+	        processCommand();
+	        System.out.println(Thread.currentThread().getName()+" End.");
+	    }
+	 
+	    private void processCommand() {
+	        try {
+	            Thread.sleep(5000);
+	        } catch (InterruptedException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	 
+	    @Override
+	    public String toString(){
+	        return this.command;
+	    }
 	}
 
 Here is the test program where we are creating fixed thread pool from Executors framework.
 
 	package com.journaldev.threadpool;
-
+ 
 	import java.util.concurrent.ExecutorService;
 	import java.util.concurrent.Executors;
-
+	 
 	public class SimpleThreadPool {
-
-		public static void main(String[] args) {
-			ExecutorService executor = Executors.newFixedThreadPool(5);
-			for (int i = 0; i < 10; i++) {
-				Runnable worker = new WorkerThread('' + i);
-				executor.execute(worker);
-			}
-			executor.shutdown();
-			while (!executor.isTerminated()) {}
-			System.out.println('Finished all threads');
-		}
+	 
+	    public static void main(String[] args) {
+	        ExecutorService executor = Executors.newFixedThreadPool(5);
+	        for (int i = 0; i < 10; i++) {
+	            Runnable worker = new WorkerThread("" + i);
+	            executor.execute(worker);
+	          }
+	        executor.shutdown();
+	        while (!executor.isTerminated()) {
+	        }
+	        System.out.println("Finished all threads");
+	    }
+	 
 	}
 	
 In above program, we are creating fixed size thread pool of 5 worker threads. Then we are submitting 10 jobs to this pool, since the pool size is 5, it will start working on 5 jobs and other jobs will be in wait state, as soon as one of the job is finished, another job from the wait queue will be picked up by worker thread and get’s executed.
@@ -93,17 +95,17 @@ The output confirms that there are five threads in the pool named from “pool-1
 Here is our custom implementation of RejectedExecutionHandler interface.
 
 	package com.journaldev.threadpool;
-
+ 
 	import java.util.concurrent.RejectedExecutionHandler;
 	import java.util.concurrent.ThreadPoolExecutor;
-
+	 
 	public class RejectedExecutionHandlerImpl implements RejectedExecutionHandler {
-
-		@Override
-		public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-			System.out.println(r.toString() + ' is rejected');
-		}
-
+	 
+	    @Override
+	    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+	        System.out.println(r.toString() + " is rejected");
+	    }
+	 
 	}
 
 ThreadPoolExecutor provides several methods using which we can find out the current state of executor, pool size, active thread count and task count. 
@@ -111,83 +113,86 @@ ThreadPoolExecutor provides several methods using which we can find out the curr
 So I have a monitor thread that will print the executor information at certain time interval.
 
 	package com.journaldev.threadpool;
-
+ 
 	import java.util.concurrent.ThreadPoolExecutor;
-
-	public class MyMonitorThread implements Runnable {
-
-		private ThreadPoolExecutor executor;
-
-		private int seconds;
-
-		private boolean run = true;
-
-		public MyMonitorThread(ThreadPoolExecutor executor, int delay) {
-			this.executor = executor;
-			this.seconds = delay;
-		}
-
-		public void shutdown() {
-			this.run = false;
-		}
-
-		@Override
-		public void run() {
-			while (run) {
-				System.out.println(
-					String.format(
-					'[monitor] [%d/%d] Active: %d, Completed: %d, Task: %d, isShutdown: %s, isTerminated: %s',
-					this.executor.getPoolSize(),
-					this.executor.getCorePoolSize(),
-					this.executor.getActiveCount(),
-					this.executor.getCompletedTaskCount(),
-					this.executor.getTaskCount(),
-					this.executor.isShutdown(),
-					this.executor.isTerminated())
-				);
-				try {
-					Thread.sleep(seconds * 1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
+	 
+	public class MyMonitorThread implements Runnable
+	{
+	    private ThreadPoolExecutor executor;
+	     
+	    private int seconds;
+	     
+	    private boolean run=true;
+	 
+	    public MyMonitorThread(ThreadPoolExecutor executor, int delay)
+	    {
+	        this.executor = executor;
+	        this.seconds=delay;
+	    }
+	     
+	    public void shutdown(){
+	        this.run=false;
+	    }
+	 
+	    @Override
+	    public void run()
+	    {
+	        while(run){
+	                System.out.println(
+	                    String.format("[monitor] [%d/%d] Active: %d, Completed: %d, Task: %d, isShutdown: %s, isTerminated: %s",
+	                        this.executor.getPoolSize(),
+	                        this.executor.getCorePoolSize(),
+	                        this.executor.getActiveCount(),
+	                        this.executor.getCompletedTaskCount(),
+	                        this.executor.getTaskCount(),
+	                        this.executor.isShutdown(),
+	                        this.executor.isTerminated()));
+	                try {
+	                    Thread.sleep(seconds*1000);
+	                } catch (InterruptedException e) {
+	                    e.printStackTrace();
+	                }
+	        }
+	             
+	    }
 	}
 
 Here is the thread pool implementation example using ThreadPoolExecutor.
 
 	package com.journaldev.threadpool;
-
+ 
 	import java.util.concurrent.ArrayBlockingQueue;
 	import java.util.concurrent.Executors;
 	import java.util.concurrent.ThreadFactory;
 	import java.util.concurrent.ThreadPoolExecutor;
 	import java.util.concurrent.TimeUnit;
-
+	 
 	public class WorkerPool {
-
-		public static void main(String args[]) throws InterruptedException {
-			//RejectedExecutionHandler implementation
-			RejectedExecutionHandlerImpl rejectionHandler = new RejectedExecutionHandlerImpl();
-			//Get the ThreadFactory implementation to use
-			ThreadFactory threadFactory = Executors.defaultThreadFactory();
-			//creating the ThreadPoolExecutor
-			ThreadPoolExecutor executorPool = new ThreadPoolExecutor(2, 4, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2), threadFactory, rejectionHandler);
-			//start the monitoring thread
-			MyMonitorThread monitor = new MyMonitorThread(executorPool, 3);
-			Thread monitorThread = new Thread(monitor);
-			monitorThread.start();
-			//submit work to the thread pool
-			for (int i = 0; i < 10; i++) {
-				executorPool.execute(new WorkerThread('cmd' + i));
-			}
-			Thread.sleep(30000);
-			//shut down the pool
-			executorPool.shutdown();
-			//shut down the monitor thread
-			Thread.sleep(5000);
-			monitor.shutdown();
-		}
+	 
+	    public static void main(String args[]) throws InterruptedException{
+	        //RejectedExecutionHandler implementation
+	        RejectedExecutionHandlerImpl rejectionHandler = new RejectedExecutionHandlerImpl();
+	        //Get the ThreadFactory implementation to use
+	        ThreadFactory threadFactory = Executors.defaultThreadFactory();
+	        //creating the ThreadPoolExecutor
+	        ThreadPoolExecutor executorPool = new ThreadPoolExecutor(2, 4, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2), threadFactory, rejectionHandler);
+	        //start the monitoring thread
+	        MyMonitorThread monitor = new MyMonitorThread(executorPool, 3);
+	        Thread monitorThread = new Thread(monitor);
+	        monitorThread.start();
+	        //submit work to the thread pool
+	        for(int i=0; i<10; i++){
+	            executorPool.execute(new WorkerThread("cmd"+i));
+	        }
+	         
+	        Thread.sleep(30000);
+	        //shut down the pool
+	        executorPool.shutdown();
+	        //shut down the monitor thread
+	        Thread.sleep(5000);
+	        monitor.shutdown();
+	         
+	    }
 	}
 
 Notice that while initializing the ThreadPoolExecutor, we are keeping initial pool size as 2, maximum pool size to 4 and work queue size as 2. So if there are 4 running tasks and more tasks are submitted, the work queue will hold only 2 of them and rest of them will be handled by RejectedExecutionHandlerImpl.
