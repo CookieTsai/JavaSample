@@ -1,4 +1,4 @@
-package thread.pool.journaldev;
+package sample.threadpool.journaldev;
 
 /**
  * Created by Cookie on 15/10/13.
