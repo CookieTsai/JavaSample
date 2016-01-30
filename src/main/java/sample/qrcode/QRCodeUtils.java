@@ -31,6 +31,8 @@ public class QRCodeUtils {
     private static int FRONT_IMAGE_WIDTH_START;
     private static int FRONT_IMAGE_HEIGHT_START;
 
+    private static final QRCodeWriter WRITER = new QRCodeWriter();
+
     static {
         InputStream inputStream = null;
         BufferedInputStream headBIS = null;
@@ -61,56 +63,41 @@ public class QRCodeUtils {
         }
     }
 
-    public static ByteArrayOutputStream encode(String content) {
+    public static ByteArrayOutputStream encode(String content) throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-        try {
-            BitMatrix matrix = new QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, WIDTH, HEIGHT);
-            MatrixToImageWriter.writeToStream(matrix, IMAGE_FORMAT, os);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        BitMatrix matrix = WRITER.encode(content, BarcodeFormat.QR_CODE, WIDTH, HEIGHT);
+        MatrixToImageWriter.writeToStream(matrix, IMAGE_FORMAT, os);
         return os;
     }
 
-    public static ByteArrayOutputStream encodeWithWaterMark(String content) {
+    public static ByteArrayOutputStream encodeWithLogo(String content) throws Exception {
         if (FRONT_IMAGE == null) {
             return encode(content);
         }
-
         ByteArrayOutputStream os = null;
 
-        try {
-            BitMatrix matrix = new QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, WIDTH, HEIGHT);
-            BufferedImage backImage = QRCodeUtils.toBufferedImage(matrix);
+        BitMatrix matrix = WRITER.encode(content, BarcodeFormat.QR_CODE, WIDTH, HEIGHT);
+        BufferedImage backImage = QRCodeUtils.toBufferedImage(matrix);
 
-            Graphics2D g = backImage.createGraphics();
-            g.drawImage(FRONT_IMAGE, FRONT_IMAGE_WIDTH_START, FRONT_IMAGE_HEIGHT_START, null);
+        Graphics2D g = backImage.createGraphics();
+        g.drawImage(FRONT_IMAGE, FRONT_IMAGE_WIDTH_START, FRONT_IMAGE_HEIGHT_START, null);
 
-            os = new ByteArrayOutputStream();
-            if(!ImageIO.write(backImage, IMAGE_FORMAT, os)) {
-                throw new IOException("Could not write an image of format png");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        os = new ByteArrayOutputStream();
+        if(!ImageIO.write(backImage, IMAGE_FORMAT, os)) {
+            throw new IOException("Could not write an image of format png");
         }
-
         return os;
     }
 
     private static BufferedImage toBufferedImage(BitMatrix matrix) {
-        int width = matrix.getWidth();
-        int height = matrix.getHeight();
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+        int w = matrix.getWidth();
+        int h = matrix.getHeight();
+        BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
                 image.setRGB(x, y, matrix.get(x, y) ? BLACK : WHITE);
             }
         }
         return image;
     }
-
-
 }

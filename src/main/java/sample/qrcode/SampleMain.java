@@ -8,7 +8,8 @@ import java.io.FileOutputStream;
  */
 public class SampleMain {
     public static void main(String[] args) throws Exception {
-        ByteArrayOutputStream stream = QRCodeUtils.encodeWithWaterMark("http://tsai-cookie.blogspot.com/2016/01/qrcode-with-logo-java-sample.html");
+        String context = "http://tsai-cookie.blogspot.com/2016/01/qrcode-with-logo-java-sample.html";
+        ByteArrayOutputStream stream = QRCodeUtils.encodeWithLogo(context);
         FileOutputStream out = new FileOutputStream("output.png");
         out.write(stream.toByteArray());
         stream.close();
