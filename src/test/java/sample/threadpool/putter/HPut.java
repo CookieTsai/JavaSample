@@ -1,4 +1,4 @@
-package sample.putter;
+package sample.threadpool.putter;
 
 import java.util.ArrayList;
 import java.util.List;
