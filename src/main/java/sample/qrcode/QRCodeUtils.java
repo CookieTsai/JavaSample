@@ -1,6 +1,5 @@
 package sample.qrcode;
 
-import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
@@ -8,10 +7,9 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+
+import static com.google.zxing.BarcodeFormat.QR_CODE;
 
 /**
  * Created by Cookie on 16/1/30.
@@ -19,30 +17,32 @@ import java.io.InputStream;
 public class QRCodeUtils {
     private static final String IMAGE_FORMAT = "png";
 
-    public static final int BLACK = 0xFF000000;
-    public static final int WHITE = 0xFFFFFFFF;
+    private static final int BLACK = 0xFF000000;
+    private static final int WHITE = 0xFFFFFFFF;
 
     private static final int WIDTH = 256;
     private static final int HEIGHT = 256;
 
     private static final String FRONT_IMAGE_NAME = "qrcode-logo.png";
-    private static BufferedImage FRONT_IMAGE;
-
-    private static int FRONT_IMAGE_WIDTH_START;
-    private static int FRONT_IMAGE_HEIGHT_START;
+    private static final BufferedImage FRONT_IMG;
+    private static final int FRONT_IMG_START_X;
+    private static final int FRONT_IMG_START_Y;
 
     private static final QRCodeWriter WRITER = new QRCodeWriter();
 
     static {
         InputStream inputStream = null;
         BufferedInputStream headBIS = null;
+        BufferedImage image = null;
+        int start_x = 0;
+        int start_y = 0;
         try {
             inputStream = ClassLoader.getSystemResourceAsStream(FRONT_IMAGE_NAME);
             headBIS = new BufferedInputStream(inputStream);
-            FRONT_IMAGE = ImageIO.read(headBIS);
+            image = ImageIO.read(headBIS);
 
-            FRONT_IMAGE_WIDTH_START = (WIDTH - FRONT_IMAGE.getWidth()) / 2;
-            FRONT_IMAGE_HEIGHT_START = (HEIGHT - FRONT_IMAGE.getHeight()) / 2;
+            start_x = (WIDTH - image.getWidth()) /2;
+            start_y = (HEIGHT - image.getHeight()) /2;
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -61,32 +61,45 @@ public class QRCodeUtils {
                 }
             }
         }
+        FRONT_IMG = image;
+        FRONT_IMG_START_X = start_x;
+        FRONT_IMG_START_Y = start_y;
     }
 
-    public static ByteArrayOutputStream encode(String content) throws Exception {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        BitMatrix matrix = WRITER.encode(content, BarcodeFormat.QR_CODE, WIDTH, HEIGHT);
-        MatrixToImageWriter.writeToStream(matrix, IMAGE_FORMAT, os);
-        return os;
+    public static ByteArrayOutputStream encode(String content) {
+        ByteArrayOutputStream result = null;
+        try {
+            BitMatrix matrix = WRITER.encode(content, QR_CODE, WIDTH, HEIGHT);
+            result = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(matrix, IMAGE_FORMAT, result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            close(result);
+        }
+        return result;
     }
 
-    public static ByteArrayOutputStream encodeWithLogo(String content) throws Exception {
-        if (FRONT_IMAGE == null) {
+    public static ByteArrayOutputStream encodeWithLogo(String content) {
+        if (FRONT_IMG == null) {
             return encode(content);
         }
-        ByteArrayOutputStream os = null;
+        ByteArrayOutputStream result = null;
+        try {
+            BitMatrix matrix = WRITER.encode(content, QR_CODE, WIDTH, HEIGHT);
+            BufferedImage backImage = QRCodeUtils.toBufferedImage(matrix);
 
-        BitMatrix matrix = WRITER.encode(content, BarcodeFormat.QR_CODE, WIDTH, HEIGHT);
-        BufferedImage backImage = QRCodeUtils.toBufferedImage(matrix);
+            Graphics2D g = backImage.createGraphics();
+            g.drawImage(FRONT_IMG, FRONT_IMG_START_X, FRONT_IMG_START_Y, null);
 
-        Graphics2D g = backImage.createGraphics();
-        g.drawImage(FRONT_IMAGE, FRONT_IMAGE_WIDTH_START, FRONT_IMAGE_HEIGHT_START, null);
-
-        os = new ByteArrayOutputStream();
-        if(!ImageIO.write(backImage, IMAGE_FORMAT, os)) {
-            throw new IOException("Could not write an image of format png");
+            result = new ByteArrayOutputStream();
+            if(!ImageIO.write(backImage, IMAGE_FORMAT, result)) {
+                throw new IOException("Could not write an image of format png.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            close(result);
         }
-        return os;
+        return result;
     }
 
     private static BufferedImage toBufferedImage(BitMatrix matrix) {
@@ -99,5 +112,14 @@ public class QRCodeUtils {
             }
         }
         return image;
+    }
+
+    private static void close(Closeable obj) {
+        if (obj == null) return;
+        try {
+            obj.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
